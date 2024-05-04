@@ -16,7 +16,7 @@ class Module:
     """
 
     _modules: Dict[str, Module]
-    _parameters: Dict[str, Parameter]
+    _parameters: Dict[str, Parameter] # parameters 可以当做一个简单的容器来看待……
     training: bool
 
     def __init__(self) -> None:
@@ -26,18 +26,23 @@ class Module:
 
     def modules(self) -> Sequence[Module]:
         "Return the direct child modules of this module."
-        m: Dict[str, Module] = self.__dict__["_modules"]
+        m: Dict[str, Module] = self.__dict__["_modules"] # 不懂这是在干什么…… 为什么不直接self._modules呢？
         return list(m.values())
 
     def train(self) -> None:
         "Set the mode of this module and all descendent modules to `train`."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        self.training = True
+        for key in self._modules:
+            self._modules[key].train()
+
 
     def eval(self) -> None:
         "Set the mode of this module and all descendent modules to `eval`."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        self.training = False
+        for key in self._modules:
+            self._modules[key].eval()
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """
@@ -48,12 +53,35 @@ class Module:
             The name and `Parameter` of each ancestor parameter.
         """
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        res = []
+
+        # 自己的参数
+        for str, par in self._parameters.items():
+            res.append((str, par))
+        
+        # 孩子们的参数
+        for module_name, module in self._modules.items():
+
+            temp = module.named_parameters()
+            for tuple in temp:
+                res.append((module_name + "." + tuple[0], tuple[1])) # 每次都复制一遍，开销会不会太大……
+            
+        
+        return res
+        
 
     def parameters(self) -> Sequence[Parameter]:
         "Enumerate over all the parameters of this module and its descendents."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        res = []
+
+        for _, par in self._parameters.items():
+            res.append(par)
+
+        for _, des in self._modules.items():
+            res += des.parameters()
+
+        return res
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """
@@ -66,11 +94,11 @@ class Module:
         Returns:
             Newly created parameter.
         """
-        val = Parameter(v, k)
+        val = Parameter(v, k) # key 作为了 Parameter的name
         self.__dict__["_parameters"][k] = val
         return val
 
-    def __setattr__(self, key: str, val: Parameter) -> None:
+    def __setattr__(self, key: str, val: Parameter) -> None: # 重载=
         if isinstance(val, Parameter):
             self.__dict__["_parameters"][key] = val
         elif isinstance(val, Module):
@@ -128,7 +156,7 @@ class Parameter:
     def __init__(self, x: Any, name: Optional[str] = None) -> None:
         self.value = x
         self.name = name
-        if hasattr(x, "requires_grad_"):
+        if hasattr(x, "requires_grad_"): # hasattr： 判断对象是否包含对应的属性
             self.value.requires_grad_(True)
             if self.name:
                 self.value.name = self.name

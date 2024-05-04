@@ -27,6 +27,8 @@ from minitorch.operators import (
 
 from .strategies import assert_close, small_floats
 
+EPS = 1e-6
+
 # ## Task 0.1 Basic hypothesis tests.
 
 
@@ -108,7 +110,11 @@ def test_sigmoid(a: float) -> None:
     * It is  strictly increasing.
     """
     # TODO: Implement for Task 0.2.
-    raise NotImplementedError('Need to implement for Task 0.2')
+    assert 0 <= sigmoid(a)
+    assert 1 >= sigmoid(a)
+    assert abs(1.0 - sigmoid(a) - sigmoid(-a)) < EPS
+    if a != 0:
+        assert sigmoid(abs(a)) >= sigmoid(-abs(a)) # 计算机的离散小数表示导致不能严格>
 
 
 @pytest.mark.task0_2
@@ -116,36 +122,50 @@ def test_sigmoid(a: float) -> None:
 def test_transitive(a: float, b: float, c: float) -> None:
     "Test the transitive property of less-than (a < b and b < c implies a < c)"
     # TODO: Implement for Task 0.2.
-    raise NotImplementedError('Need to implement for Task 0.2')
+    max_val = max(max(a,b),c)
+    min_val = min(min(a,b), c)
+    mid_val = a + b + c - max_val - min_val
+
+    if min_val < mid_val and mid_val < max_val:
+        assert lt(min_val, mid_val)
+        assert lt(mid_val, max_val)
+        assert lt(min_val, max_val)
 
 
 @pytest.mark.task0_2
-def test_symmetric() -> None:
+@given(small_floats, small_floats)
+def test_symmetric(a: float, b: float) -> None:
     """
     Write a test that ensures that :func:`minitorch.operators.mul` is symmetric, i.e.
     gives the same value regardless of the order of its input.
     """
     # TODO: Implement for Task 0.2.
-    raise NotImplementedError('Need to implement for Task 0.2')
+    assert mul(a, b) == mul(b, a)
 
 
 @pytest.mark.task0_2
-def test_distribute() -> None:
+@given(small_floats, small_floats, small_floats)
+def test_distribute(a: float, b: float, c: float) -> None:
     r"""
     Write a test that ensures that your operators distribute, i.e.
     :math:`z \times (x + y) = z \times x + z \times y`
     """
     # TODO: Implement for Task 0.2.
-    raise NotImplementedError('Need to implement for Task 0.2')
+    assert abs(mul(a, b + c) - mul(a, b) - mul(a, c)) < EPS  # 本来是想测相等的。
+     
 
 
 @pytest.mark.task0_2
-def test_other() -> None:
+@given(small_floats, small_floats, small_floats)
+def test_other(a : float, b: float, c: float) -> None:
     """
     Write a test that ensures some other property holds for your functions.
     """
     # TODO: Implement for Task 0.2.
-    raise NotImplementedError('Need to implement for Task 0.2')
+    # assert abs(mul(a * b, c) - mul(a, b*c)) < EPS
+    # 我也没想好要测什么。
+    assert abs(mul(a, b + c) - mul(a, b) - mul(a, c)) < EPS
+    return 
 
 
 # ## Task 0.3  - Higher-order functions
@@ -174,7 +194,8 @@ def test_sum_distribute(ls1: List[float], ls2: List[float]) -> None:
     is the same as the sum of each element of `ls1` plus each element of `ls2`.
     """
     # TODO: Implement for Task 0.3.
-    raise NotImplementedError('Need to implement for Task 0.3')
+    ls3 = ls1 + ls2
+    assert abs(sum(ls3) - sum(ls1) - sum(ls2)) < EPS
 
 
 @pytest.mark.task0_3

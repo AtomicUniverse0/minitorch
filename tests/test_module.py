@@ -48,6 +48,11 @@ def test_stacked_demo() -> None:
     mod = ModuleA1()
     np = dict(mod.named_parameters())
 
+    print("np is", np)
+    print("module:", mod._modules) # 逆天，这里的modules是怎么神不知鬼不觉地加进去的？
+    print("parameter:", mod._parameters)
+    print("dbg end")
+
     x = str(mod)
     print(x)
     assert mod.p1.value == 5
